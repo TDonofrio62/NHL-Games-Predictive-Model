@@ -479,11 +479,4 @@ prob_away_win
 
 quantile(home_xwin_pers$home_xwin_per, c(0.025,0.975))
 ```
-```{r}
-solution <- function(prices) {
-  for i in prices[i]:
-    for j in prices[j]:
-    if
-
-```
 
