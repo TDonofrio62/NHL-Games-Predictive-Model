@@ -1,0 +1,489 @@
+---
+title: "Predictive NHL Model"
+author: "Thomas D'Onofrio" 
+date: "1/3/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readr)
+library(dplyr)
+
+#seveneight <- read_csv("~/NHL Side Project/Team Season Totals - Natural Stat Trick.csv")
+#eightnine <- read_csv("~/NHL Side Project/Team Season Totals - Natural Stat Trick (1).csv")
+#nineten <- read_csv("~/NHL Side Project/Team Season Totals - Natural Stat Trick (2).csv")
+#teneleven <- read_csv("~/NHL Side Project/Team Season Totals - Natural Stat Trick (3).csv")
+#eleventwelve <- read_csv("~/NHL Side Project/Team Season Totals - Natural Stat Trick (4).csv")
+#twelvethirteen <- read_csv("~/NHL Side Project/Team Season Totals - Natural Stat Trick (5).csv")
+#thirteenfourteen <- read_csv("~/NHL Side Project/Team Season Totals - Natural Stat Trick (6).csv")
+#fourteenfifteen <- read_csv("~/NHL Side Project/Team Season Totals - Natural Stat Trick (7).csv")
+#fifteensixteen <- read_csv("~/NHL Side Project/Team Season Totals - Natural Stat Trick (8).csv")
+#sixteenseventeen <- read_csv("~/NHL Side Project/Team Season Totals - Natural Stat Trick (9).csv")
+#seventeeneighteen <- read_csv("~/NHL Side Project/Team Season Totals - Natural Stat Trick (10).csv")
+#eighteennineteen <- read_csv("~/NHL Side Project/Team Season Totals - Natural Stat Trick (11).csv")
+#nineteentwenty <- read_csv("~/NHL Side Project/Team Season Totals - Natural Stat Trick (12).csv")
+#twentytwentyone<- read_csv("~/NHL Side Project/Team Season Totals - Natural Stat Trick (13).csv")
+```
+
+```{r}
+#team_stats_unclean <- rbind(seveneight, eightnine, nineten, teneleven, eleventwelve, twelvethirteen, thirteenfourteen, fourteenfifteen, fifteensixteen, sixteenseventeen, seventeeneighteen, eighteennineteen, nineteentwenty, twentytwentyone)
+
+```
+
+```{r}
+#team_stats_1 <- team_stats_unclean %>% mutate(`WIN%` = W/GP) %>% dplyr::select(`Team`, `WIN%`, `CF%`, `SF%`, `xGF%`, `SCF%`, `HDCF%`, `SH%`, `SV%`)
+
+#team_stats <-  as.data.frame(team_stats_1)
+#write_csv(team_stats, "~/NHL Side Project/NHL_team_stats.csv")
+```
+
+```{r}
+team_stats <- read_csv("NHL_team_stats.csv")
+```
+
+
+```{r}
+#EDA
+
+par(mfrow=c(3,3))
+hist(team_stats$`WIN%`, main="Histogram of WIN%", xlab="Winning %")
+abline(v=mean(team_stats$`WIN%`),col="blue")
+hist(team_stats$`CF%`, main="Histogram of CF%", xlab="Corsi For %")
+abline(v=mean(team_stats$`CF%`),col="blue")
+hist(team_stats$`SF%`, main="Histogram of SF%", xlab="Shots For %")
+abline(v=mean(team_stats$`SF%`),col="blue")
+hist(team_stats$`xGF%`, main="Histogram of xGF%", xlab="Expected Goals For %")
+abline(v=mean(team_stats$`xGF%`),col="blue")
+hist(team_stats$`SCF%`, main="Histogram of SCF%", xlab="Scoring Chances For %")
+abline(v=mean(team_stats$`SCF%`),col="blue")
+hist(team_stats$`HDCF%`, main="Histogram of HDCF%", xlab="High Danger Chnaces Against %")
+abline(v=mean(team_stats$`HDCF%`),col="blue")
+hist(team_stats$`SH%`, main="Histogram of SH%", xlab="Shooting %")
+abline(v=mean(team_stats$`SH%`),col="blue")
+hist(team_stats$`SV%`, main="Histogram of SV%", xlab="Save %")
+abline(v=mean(team_stats$`SV%`),col="blue")
+
+```
+
+```{r}
+par(mfrow=c(2,2))
+plot(team_stats$`WIN%` ~ team_stats$`CF%`, main="WIN% vs CF%", xlab="Corsi For %", ylab="Winning %")
+abline(lm(`WIN%` ~ `CF%`, data=team_stats), col="red")
+plot(team_stats$`WIN%` ~ team_stats$`SF%`, main="WIN% vs SF%", xlab="Shots For %", ylab="Winning %")
+abline(lm(`WIN%` ~ `SF%`, data=team_stats), col="red")
+plot(team_stats$`WIN%` ~ team_stats$`xGF%`, main="WIN% vs xGF%", xlab="xGoals For %", ylab="Winning %")
+abline(lm(`WIN%` ~ `xGF%`, data=team_stats), col="red")
+plot(team_stats$`WIN%` ~ team_stats$`SCF%`, main="WIN% vs SCF%", xlab="Scoring Chances For %", ylab="Winning %")
+abline(lm(`WIN%` ~ `SCF%`, data=team_stats), col="red")
+plot(team_stats$`WIN%` ~ team_stats$`HDCF%`, main="WIN% vs HDCF%", xlab="High Danger Chances For %", ylab="Winning %")
+abline(lm(`WIN%` ~ `HDCF%`, data=team_stats), col="red")
+plot(team_stats$`WIN%` ~ team_stats$`SH%`, main="WIN% vs SH%", xlab="Shooting %", ylab="Winning %")
+abline(lm(`WIN%` ~ `SH%`, data=team_stats), col="red")
+plot(team_stats$`WIN%` ~ team_stats$`SV%`, main="WIN% vs SV%", xlab="Save %", ylab="Winning %")
+abline(lm(`WIN%` ~ `SV%`, data=team_stats), col="red")
+```
+
+```{r}
+set.seed(1909)
+sampled_train = sort(sample(nrow(team_stats), 318))
+train_<-team_stats[sampled_train,]
+test_<-team_stats[-sampled_train,]
+
+train <- as.data.frame(train_)
+test <- as.data.frame(test_)
+```
+
+```{r}
+full_model <- lm(`WIN%` ~ `CF%` + `SF%` + `xGF%` + `SCF%` + `HDCF%`+ `SH%` + `SV%`, data=train)
+summary(full_model)
+```
+
+```{r}
+#Check Assumptions
+residuals <- resid(full_model)
+
+par(mfrow=c(2,3))
+plot(residuals ~ fitted(full_model), main="Residuals vs Fitted", xlab="Fitted", ylab="Residuals")
+plot(residuals ~ train$`CF%`, main="Residuals vs Corsi For %", xlab="Corsi For %", ylab="Residuals")
+plot(residuals ~ train$`SF%`, main="Residuals vs Shots For %", xlab="Shots For %", ylab="Residuals")
+plot(residuals ~ train$`xGF%`, main="Residuals vs xGoals For %", xlab="Expected Goals For %", ylab="Residuals")
+plot(residuals ~ train$`SCF%`, main="Residuals vs Scoring Chances For %", xlab="Scoring Chances For %", ylab="Residuals")
+plot(residuals ~ train$`HDCF%`, main="Residuals vs High Danger Chances For %", xlab="High Danger Chances For %", ylab="Residuals")
+plot(residuals ~ train$`SH%`, main="Residuals vs Shooting %", xlab="Shooting %", ylab="Residuals")
+plot(residuals ~ train$`SV%`, main="Residuals vs Save %", xlab="Save %", ylab="Residuals")
+
+qqnorm(residuals)
+qqline(residuals)
+```
+```{r}
+#Check Conditions
+pairs(train[,3:9])
+plot(train$`WIN%` ~ fitted(full_model), main="Y versus Y-hat", xlab="Y-hat", ylab="Y")
+abline(a = 0, b = 1)
+lines(lowess(train$`WIN%` ~ fitted(full_model)), lty=2)
+```
+```{r}
+#Check if anything needs to be transformed
+library(car)
+
+p <- powerTransform(cbind(train[,2:9]))
+summary(p)
+
+#No transformations needed
+```
+```{r}
+library(MASS)
+stepAIC(full_model, direction="both", k=2)
+```
+
+```{r}
+final_model_step <- lm(`WIN%` ~ `CF%` + `SF%` + `xGF%` + `HDCF%`+ `SH%` + `SV%`, data=train)
+summary(final_model_step)
+```
+
+```{r}
+#More Test
+
+#Individual T-Tests using p-values and ANOVA F-Test using the F-statistic both show no variables should be removed
+
+summary(final_model_step)$adj.r.squared
+
+vif(final_model_step)
+```
+
+```{r}
+#Multicollinearity Checks
+
+no_xgf <- lm(`WIN%` ~ `CF%` + `SF%` + `HDCF%`+ `SH%` + `SV%`, data=train)
+summary(no_xgf)
+vif(no_xgf)
+summary(no_xgf)$adj.r.squared
+
+no_comps <- lm(`WIN%` ~ `xGF%`+ `SH%` + `SV%`, data=train)
+summary(no_comps)
+vif(no_comps)
+summary(no_comps)$adj.r.squared
+
+BIC(no_xgf)
+BIC(no_comps)
+BIC(full_model)
+```
+
+```{r}
+BIC(full_model)
+BIC(final_model_step)
+BIC(no_xgf)
+BIC(no_comps)
+BIC(lm(`WIN%` ~ `xGF%`+ `SH%` + `SV%` + `CF%`, data=train))
+BIC(lm(`WIN%` ~ `xGF%`+ `SH%` + `SV%` + `SF%`, data=train))
+BIC(lm(`WIN%` ~ `xGF%`+ `SH%` + `SV%` + `HDCF%`, data=train))
+```
+
+```{r}
+summary(full_model)$adj.r.squared
+summary(final_model_step)$adj.r.squared
+summary(no_xgf)$adj.r.squared
+summary(no_comps)$adj.r.squared
+summary(lm(`WIN%` ~ `xGF%`+ `SH%` + `SV%` + `CF%`, data=train))$adj.r.squared
+summary(lm(`WIN%` ~ `xGF%`+ `SH%` + `SV%` + `SF%`, data=train))$adj.r.squared
+summary(lm(`WIN%` ~ `xGF%`+ `SH%` + `SV%` + `HDCF%`, data=train))$adj.r.squared
+```
+
+```{r}
+vif(lm(`WIN%` ~ `xGF%`+ `SH%` + `SV%` + `SF%`, data=train))
+```
+
+Model with xGF%, SF%, SV%, and SH% seems to be the model that limits multicollinearity while still being the best predictor
+
+```{r}
+final_model <- lm(`WIN%` ~ `xGF%`+ `SH%` + `SV%` + `CF%`, data=train)
+summary(final_model)
+```
+
+Satisfies T-tests and F-test as well
+
+```{r}
+#RECHECK ASSUMPTIONS
+
+residuals_final <- resid(final_model)
+
+par(mfrow=c(2,3))
+plot(residuals_final ~ fitted(full_model), main="Residuals vs Fitted", xlab="Fitted", ylab="Residuals")
+plot(residuals_final ~ train$`SF%`, main="Residuals vs Shots For %", xlab="Shots For %", ylab="Residuals")
+plot(residuals_final ~ train$`xGF%`, main="Residuals vs xGoals For %", xlab="Expected Goals For %", ylab="Residuals")
+plot(residuals_final ~ train$`SH%`, main="Residuals vs Shooting %", xlab="Shooting %", ylab="Residuals")
+plot(residuals_final ~ train$`SV%`, main="Residuals vs Save %", xlab="Save %", ylab="Residuals")
+
+qqnorm(residuals_final)
+qqline(residuals_final)
+
+p_final <- powerTransform(cbind(train[c(2,4,5,8,9)]))
+summary(p_final)
+
+```
+
+All satisfied still
+
+```{r}
+#Check For Problematic Observations
+
+n <- length(train$`WIN%`)
+p <- length(coef(final_model))-1
+
+# Leverage Points
+hat <- hatvalues(final_model)
+hatcut <- 2*(p+1)/n
+
+w1 <- which(hat > hatcut)
+w1
+
+#Outliers
+
+rs <- rstandard(final_model)
+
+w2 <- which(rs < -2 | rs > 2)
+w2
+
+# Influential Observations
+
+D_cutoff <- qf(0.5, p+1, n-p-1)
+D <- cooks.distance(final_model)
+w3 <- which(D > D_cutoff)
+w3
+
+DFFITS_cutoff <- 2*sqrt((p+1)/n)
+DFFITS <- dffits(final_model)
+w4 <- which(abs(DFFITS) > DFFITS_cutoff)
+w4
+
+DFBETAS_cutoff <- 2/sqrt(n)
+DFBETAS <- dfbetas(final_model)
+w5 <- which(abs(DFBETAS[,1]) > DFBETAS_cutoff)
+w5
+w6 <- which(abs(DFBETAS[,2]) > DFBETAS_cutoff)
+w6
+w7 <- which(abs(DFBETAS[,3]) > DFBETAS_cutoff)
+w7
+w8 <- which(abs(DFBETAS[,4]) > DFBETAS_cutoff)
+w8
+w9 <- which(abs(DFBETAS[,5]) > DFBETAS_cutoff)
+w9
+
+w <- unique(c(w3, w4, w5, w6, w7, w8))
+w
+```
+
+```{r} 
+#Leverage Plots 
+par(mfrow=(c(2,2)))
+plot(train$`WIN%` ~ train$`SF%`, main="Winning % vs Shots For %: \n Leverage Points", xlab="Shots For %", ylab="Winning %")
+points(train[w1,2]~train[w1,4], col="red", pch=19)
+plot(train$`WIN%` ~ train$`xGF%`, main="Winning % vs xGoals For %: \n Leverage Points", xlab="xGoals For %", ylab="Winning %")
+points(train[w1,2]~train[w1,5], col="red", pch=19)
+plot(train$`WIN%` ~ train$`SH%`, main="Winning % vs Shooting %: \n Leverage Points", xlab="Shooting %", ylab="Winning %")
+points(train[w1,2]~train[w1,8], col="red", pch=19)
+plot(train$`WIN%` ~ train$`SV%`, main="Winning % vs Save %: \n Leverage Points", xlab="Save %", ylab="Winning %")
+points(train[w1,2]~train[w1,9], col="red", pch=19)
+```
+
+```{r}
+#Outlier Plots
+
+par(mfrow=(c(2,2)))
+plot(train$`WIN%` ~ train$`SF%`, main="Winning % vs Shots For %: \n Outliers", xlab="Shots For %", ylab="Winning %")
+points(train[w2,2]~train[w2,4], col="red", pch=19)
+plot(train$`WIN%` ~ train$`xGF%`, main="Winning % vs xGoals For %: \n Outliers", xlab="xGoals For %", ylab="Winning %")
+points(train[w2,2]~train[w2,5], col="red", pch=19)
+plot(train$`WIN%` ~ train$`SH%`, main="Winning % vs Shooting %: \n Outliers", xlab="Shooting %", ylab="Winning %")
+points(train[w2,2]~train[w2,8], col="red", pch=19)
+plot(train$`WIN%` ~ train$`SV%`, main="Winning % vs Save %: \n Outliers", xlab="Save %", ylab="Winning %")
+points(train[w2,2]~train[w2,9], col="red", pch=19)
+```
+
+```{r}
+#Influential Plots
+
+par(mfrow=(c(2,2)))
+plot(train$`WIN%` ~ train$`SF%`, main="Winning % vs Shots For %: \n Influential Points", xlab="Shots For %", ylab="Winning %")
+points(train[w,2]~train[w,4], col="red", pch=19)
+plot(train$`WIN%` ~ train$`xGF%`, main="Winning % vs xGoals For %: \n Influential Points", xlab="xGoals For %", ylab="Winning %")
+points(train[w,2]~train[w,5], col="red", pch=19)
+plot(train$`WIN%` ~ train$`SH%`, main="Winning % vs Shooting %: \n Influential Points", xlab="Shooting %", ylab="Winning %")
+points(train[w,2]~train[w,8], col="red", pch=19)
+plot(train$`WIN%` ~ train$`SV%`, main="Winning % vs Save %: \n Influential Points", xlab="Save %", ylab="Winning %")
+points(train[w,2]~train[w,9], col="red", pch=19)
+```
+```{r}
+#Validation
+
+final_model_test <- lm(`WIN%` ~ `xGF%`+ `SH%` + `SV%` + `CF%`, data=test)
+summary(final_model_test)
+
+summary(final_model_test)$adj.r.squared
+```
+
+```{r}
+fmtest_residuals <- resid(final_model_test)
+par(mfrow=c(2,3))
+plot(fmtest_residuals ~ fitted(final_model_test), main="Test Residuals vs Fitted", xlab="Fitted", ylab="Residuals")
+plot(fmtest_residuals ~ test$`SF%`, main="Test Residuals vs Shots For %", xlab="Shots For %", ylab="Residuals")
+plot(fmtest_residuals ~ test$`xGF%`, main="Test Residuals vs xGoals For %", xlab="xGoals For %", ylab="Residuals")
+plot(fmtest_residuals ~ test$`SH%`, main="Test Residuals vs Shooting %", xlab="Shooting %", ylab="Residuals")
+plot(fmtest_residuals ~ test$`SV%`, main="Test Residuals vs Save %", xlab="Save %", ylab="Residuals")
+qqnorm(rstandard(final_model_test))
+qqline(rstandard(final_model_test))
+
+```
+
+```{r}
+n_test <- length(test$`WIN%`)
+p_test <- length(coef(final_model_test))-1
+
+# Leverage Points
+hat_test <- hatvalues(final_model_test)
+hatcut_test <- 2*(p_test+1)/n_test
+
+w1_test <- which(hat_test > hatcut_test)
+w1_test
+
+#Outliers
+
+rs_test <- rstandard(final_model_test)
+
+w2_test <- which(rs_test < -2 | rs_test > 2)
+w2_test
+
+# Influential Observations
+
+D_cutoff_test <- qf(0.5, p_test+1, n_test-p_test-1)
+D_test <- cooks.distance(final_model_test)
+w3_test <- which(D_test > D_cutoff_test)
+w3_test
+
+DFFITS_cutoff_test <- 2*sqrt((p_test+1)/n_test)
+DFFITS_test <- dffits(final_model_test)
+w4_test <- which(abs(DFFITS_test) > DFFITS_cutoff_test)
+w4_test
+
+DFBETAS_cutoff_test <- 2/sqrt(n_test)
+DFBETAS_test <- dfbetas(final_model_test)
+w5_test <- which(abs(DFBETAS_test[,1]) > DFBETAS_cutoff_test)
+w5_test
+w6_test <- which(abs(DFBETAS_test[,2]) > DFBETAS_cutoff_test)
+w6_test
+w7_test <- which(abs(DFBETAS_test[,3]) > DFBETAS_cutoff_test)
+w7_test
+w8_test <- which(abs(DFBETAS_test[,4]) > DFBETAS_cutoff_test)
+w8_test
+w9_test <- which(abs(DFBETAS_test[,5]) > DFBETAS_cutoff_test)
+w9_test
+
+w_test <- unique(c(w3_test, w4_test, w5_test, w6_test, w7_test, w8_test))
+w_test
+```
+
+```{r}
+#Leverage Plots 
+par(mfrow=(c(2,2)))
+plot(test$`WIN%` ~ test$`SF%`, main="Winning % vs Shots For %: \n Leverage Points", xlab="Shots For %", ylab="Winning %")
+points(test[w1_test,2]~test[w1_test,4], col="red", pch=19)
+plot(test$`WIN%` ~ test$`xGF%`, main="Winning % vs xGoals For %: \n Leverage Points", xlab="xGoals For %", ylab="Winning %")
+points(test[w1_test,2]~test[w1_test,5], col="red", pch=19)
+plot(test$`WIN%` ~ test$`SH%`, main="Winning % vs Shooting %: \n Leverage Points", xlab="Shooting %", ylab="Winning %")
+points(test[w1_test,2]~test[w1_test,8], col="red", pch=19)
+plot(test$`WIN%` ~ test$`SV%`, main="Winning % vs Save %: \n Leverage Points", xlab="Save %", ylab="Winning %")
+points(test[w1_test,2]~test[w1_test,9], col="red", pch=19)
+
+#Outlier Plots
+
+par(mfrow=(c(2,2)))
+plot(test$`WIN%` ~ test$`SF%`, main="Winning % vs Shots For %: \n Outliers", xlab="Shots For %", ylab="Winning %")
+points(test[w2_test,2]~test[w2_test,4], col="red", pch=19)
+plot(test$`WIN%` ~ test$`xGF%`, main="Winning % vs xGoals For %: \n Outliers", xlab="xGoals For %", ylab="Winning %")
+points(test[w2_test,2]~test[w2_test,5], col="red", pch=19)
+plot(test$`WIN%` ~ test$`SH%`, main="Winning % vs Shooting %: \n Outliers", xlab="Shooting %", ylab="Winning %")
+points(test[w2_test,2]~test[w2_test,8], col="red", pch=19)
+plot(test$`WIN%` ~ test$`SV%`, main="Winning % vs Save %: \n Outliers", xlab="Save %", ylab="Winning %")
+points(test[w2_test,2]~test[w2_test,9], col="red", pch=19)
+
+#Influential Plots
+
+par(mfrow=(c(2,2)))
+plot(test$`WIN%` ~ test$`SF%`, main="Winning % vs Shots For %: \n Influential Points", xlab="Shots For %", ylab="Winning %")
+points(test[w_test,2]~test[w_test,4], col="red", pch=19)
+plot(test$`WIN%` ~ test$`xGF%`, main="Winning % vs xGoals For %: \n Influential Points", xlab="xGoals For %", ylab="Winning %")
+points(test[w_test,2]~test[w_test,5], col="red", pch=19)
+plot(test$`WIN%` ~ test$`SH%`, main="Winning % vs Shooting %: \n Influential Points", xlab="Shooting %", ylab="Winning %")
+points(test[w_test,2]~test[w_test,8], col="red", pch=19)
+plot(test$`WIN%` ~ test$`SV%`, main="Winning % vs Save %: \n Influential Points", xlab="Save %", ylab="Winning %")
+points(test[w_test,2]~test[w_test,9], col="red", pch=19)
+```
+```{r}
+mtr <- apply(train[c(2,4,5,8,9)], 2, mean)
+sdtr <- apply(train[c(2,4,5,8,9)], 2, sd)
+
+mtest <- apply(test[c(2,4,5,8,9)], 2, mean)
+sdtest <- apply(test[c(2,4,5,8,9)], 2, sd)
+
+mtr
+sdtr
+mtest
+sdtest
+```
+Model is Validated, should translate to other datasets.
+
+#Simulations and Predictions
+
+```{r}
+current_season <- read_csv("~/NHL Side Project/Team Season Totals - Natural Stat Trick (14).csv")
+```
+
+```{r}
+expected_win_per <- predict(final_model, newdata = current_season)
+expected_win_per
+```
+```{r}
+#Simulations for Each Game with confidence interval
+home_win_per <- round((expected_win_per[26]/(expected_win_per[26] + expected_win_per[32]))*100, digits=2)
+home_win_per
+
+home_vec <- c("home")
+away_vec <- c("home")
+
+vector <- rep(c("home", "away"), times=c(round(home_win_per*100,digits=0), round((100 - home_win_per)*100,digits=0)))
+
+
+set.seed(1909)
+B <- 1000 
+n <- 200 
+home_xwin_per <- rep(NA,B)
+for (i in 1:B) {
+  sample <- sample(vector,n,replace = TRUE)
+  
+  home_xwin_per[i] <- as.numeric(table(sample)["home"])/n*100
+}
+
+home_xwin_pers <- tibble(home_xwin_per = home_xwin_per)
+
+prob_home_win <- mean(home_xwin_pers$home_xwin_per)
+prob_away_win <- 100-mean(home_xwin_pers$home_xwin_per)
+
+prob_home_win
+prob_away_win
+
+# Here you can derive the CIs of interest.
+
+quantile(home_xwin_pers$home_xwin_per, c(0.025,0.975))
+```
+```{r}
+solution <- function(prices) {
+  for i in prices[i]:
+    for j in prices[j]:
+    if
+
+```
+
